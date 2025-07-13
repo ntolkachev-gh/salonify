@@ -22,6 +22,7 @@ from core.admin_custom import admin_site
 urlpatterns = [
     path('admin/', admin_site.urls),
     path('api/', include('api.urls')),
+    path('telegram/', include('telegram_bot.urls')),
 ]
 
 # Serve static files in development
