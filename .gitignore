@@ -129,7 +129,7 @@ dmypy.json
 .pyre/
 
 # Django specific
-migrations/
+# migrations/  # Commented out - we need migrations in git
 staticfiles/
 media/
 
