@@ -10,9 +10,218 @@ from django.shortcuts import get_object_or_404
 from telegram import Update
 from telegram.ext import ContextTypes
 from .bot import get_or_create_bot, start_bot_for_user, stop_bot_for_user
+from core.models import Salon
 
 User = get_user_model()
 logger = logging.getLogger(__name__)
+
+# In-memory session storage (в продакшене лучше использовать Redis)
+user_sessions = {}
+
+def get_user_session(user_id):
+    """Get user session data"""
+    return user_sessions.get(user_id, {})
+
+def set_user_session(user_id, data):
+    """Set user session data"""
+    user_sessions[user_id] = data
+
+def clear_user_session(user_id):
+    """Clear user session data"""
+    if user_id in user_sessions:
+        del user_sessions[user_id]
+
+def start_salon_registration(user_id):
+    """Start salon registration process"""
+    set_user_session(user_id, {
+        'state': 'salon_registration',
+        'step': 'name',
+        'salon_data': {}
+    })
+
+def handle_salon_registration_step(bot, user, chat_id, text, session_data):
+    """Handle salon registration steps"""
+    step = session_data.get('step')
+    salon_data = session_data.get('salon_data', {})
+    
+    if step == 'name':
+        salon_data['name'] = text
+        session_data['step'] = 'address'
+        session_data['salon_data'] = salon_data
+        set_user_session(user.id, session_data)
+        send_message(bot, chat_id, "📍 Введите адрес салона:")
+        
+    elif step == 'address':
+        salon_data['address'] = text
+        session_data['step'] = 'phone'
+        session_data['salon_data'] = salon_data
+        set_user_session(user.id, session_data)
+        send_message(bot, chat_id, "📞 Введите телефон салона:")
+        
+    elif step == 'phone':
+        salon_data['phone'] = text
+        session_data['step'] = 'email'
+        session_data['salon_data'] = salon_data
+        set_user_session(user.id, session_data)
+        send_message(bot, chat_id, "📧 Введите email салона:")
+        
+    elif step == 'email':
+        salon_data['email'] = text
+        session_data['step'] = 'working_hours'
+        session_data['salon_data'] = salon_data
+        set_user_session(user.id, session_data)
+        send_message(bot, chat_id, "🕐 Введите часы работы (например: Пн-Пт 9:00-18:00, Сб 10:00-16:00):")
+        
+    elif step == 'working_hours':
+        salon_data['working_hours'] = text
+        session_data['step'] = 'telegram_bot_token'
+        session_data['salon_data'] = salon_data
+        set_user_session(user.id, session_data)
+        send_message(bot, chat_id, """
+🤖 Введите токен Telegram бота для клиентов салона:
+
+📝 Как получить токен:
+1. Напишите @BotFather в Telegram
+2. Отправьте команду /newbot
+3. Следуйте инструкциям
+4. Скопируйте полученный токен
+
+Токен выглядит примерно так: 123456789:ABCdefGHIjklMNOpqrsTUVwxyz
+        """.strip())
+        
+    elif step == 'telegram_bot_token':
+        # Validate telegram bot token format
+        if not text or not text.count(':') == 1:
+            send_message(bot, chat_id, """
+❌ Неверный формат токена!
+
+Токен должен содержать символ ':' и выглядеть примерно так:
+123456789:ABCdefGHIjklMNOpqrsTUVwxyz
+
+Попробуйте еще раз:
+            """.strip())
+            return
+        
+        salon_data['telegram_bot_token'] = text
+        session_data['step'] = 'telegram_bot_username'
+        session_data['salon_data'] = salon_data
+        set_user_session(user.id, session_data)
+        send_message(bot, chat_id, """
+🤖 Введите username Telegram бота (без @):
+
+Например: my_salon_bot
+Это имя бота, которое вы указали при создании в @BotFather
+        """.strip())
+        
+    elif step == 'telegram_bot_username':
+        # Clean username (remove @ if present)
+        username = text.strip().lstrip('@')
+        salon_data['telegram_bot_username'] = username
+        session_data['step'] = 'openai_api_key'
+        session_data['salon_data'] = salon_data
+        set_user_session(user.id, session_data)
+        send_message(bot, chat_id, """
+🔑 Введите API ключ OpenAI:
+
+📝 Как получить ключ:
+1. Зайдите на https://platform.openai.com/api-keys
+2. Войдите в аккаунт или зарегистрируйтесь
+3. Нажмите 'Create new secret key'
+4. Скопируйте ключ
+
+Ключ начинается с 'sk-' и выглядит примерно так:
+sk-proj-abc123def456ghi789jkl...
+        """.strip())
+        
+    elif step == 'openai_api_key':
+        # Validate OpenAI API key format
+        if not text or not text.startswith('sk-'):
+            send_message(bot, chat_id, """
+❌ Неверный формат API ключа!
+
+Ключ OpenAI должен начинаться с 'sk-'
+Например: sk-proj-abc123def456ghi789jkl...
+
+Попробуйте еще раз:
+            """.strip())
+            return
+        
+        salon_data['openai_api_key'] = text
+        session_data['step'] = 'confirmation'
+        session_data['salon_data'] = salon_data
+        set_user_session(user.id, session_data)
+        
+        # Show summary and ask for confirmation
+        summary_message = f"""
+📋 Проверьте данные салона:
+
+🏪 Название: {salon_data['name']}
+📍 Адрес: {salon_data['address']}
+📞 Телефон: {salon_data['phone']}
+📧 Email: {salon_data['email']}
+🕐 Часы работы: {salon_data['working_hours']}
+🤖 Бот: @{salon_data['telegram_bot_username']}
+🔑 OpenAI ключ: {salon_data['openai_api_key'][:10]}...
+
+✅ Все верно? Отправьте 'да' для подтверждения или 'нет' для отмены.
+        """
+        
+        send_message(bot, chat_id, summary_message.strip())
+        
+    elif step == 'confirmation':
+        if text.lower() in ['да', 'yes', 'y', 'д']:
+            # Create salon
+            try:
+                salon = Salon.objects.create(
+                    user=user,
+                    name=salon_data['name'],
+                    address=salon_data['address'],
+                    phone=salon_data['phone'],
+                    email=salon_data['email'],
+                    working_hours={'text': salon_data['working_hours']},
+                    telegram_bot_token=salon_data['telegram_bot_token'],
+                    telegram_bot_username=salon_data['telegram_bot_username'],
+                    openai_api_key=salon_data['openai_api_key'],
+                    timezone='UTC'
+                )
+                
+                success_message = f"""
+✅ Салон успешно зарегистрирован!
+
+🏪 Название: {salon.name}
+📍 Адрес: {salon.address}
+📞 Телефон: {salon.phone}
+📧 Email: {salon.email}
+🕐 Часы работы: {salon_data['working_hours']}
+🤖 Бот для клиентов: @{salon.telegram_bot_username}
+
+🔐 Данные для входа в веб-админку:
+URL: https://salonify-app-3cd2419b7b71.herokuapp.com/admin/
+Логин: {user.username}
+
+🎯 Следующие шаги:
+1. Настройте webhook для бота клиентов
+2. Добавьте мастеров и услуги в админке
+3. Начните принимать записи!
+
+ID салона: {salon.id}
+                """
+                
+                send_message(bot, chat_id, success_message.strip())
+                
+                # Clear session
+                clear_user_session(user.id)
+                
+            except Exception as e:
+                send_message(bot, chat_id, f"❌ Ошибка при создании салона: {str(e)}")
+                clear_user_session(user.id)
+        
+        elif text.lower() in ['нет', 'no', 'n', 'н']:
+            send_message(bot, chat_id, "❌ Регистрация отменена. Используйте /register_salon для повторной попытки.")
+            clear_user_session(user.id)
+        
+        else:
+            send_message(bot, chat_id, "Пожалуйста, ответьте 'да' или 'нет':")
 
 
 @csrf_exempt
@@ -68,8 +277,12 @@ def handle_message_sync(bot, update, user):
         text = message.text
         chat_id = message.chat.id
         
+        # Get or create user session data
+        session_data = get_user_session(user.id)
+        
         # Handle commands
         if text == '/start':
+            clear_user_session(user.id)
             send_message(bot, chat_id, f"""
 👋 Добро пожаловать в Salonify Admin Bot, {message.from_user.first_name}!
 
@@ -100,11 +313,15 @@ def handle_message_sync(bot, update, user):
             """.strip())
             
         elif text == '/register_salon':
+            start_salon_registration(user.id)
             send_message(bot, chat_id, """
 🏪 Регистрация салона
 
 Введите название вашего салона:
             """.strip())
+            
+        elif session_data.get('state') == 'salon_registration':
+            handle_salon_registration_step(bot, user, chat_id, text, session_data)
             
         elif text == '/create_bot':
             send_message(bot, chat_id, """
