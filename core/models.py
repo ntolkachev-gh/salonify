@@ -73,6 +73,18 @@ class Salon(models.Model):
         default='Europe/Moscow',
         verbose_name='Часовой пояс'
     )
+    telegram_bot_token = models.CharField(
+        max_length=255, 
+        blank=True, 
+        verbose_name='Токен Telegram бота салона',
+        help_text='Токен персонального бота для клиентов салона'
+    )
+    telegram_bot_username = models.CharField(
+        max_length=100, 
+        blank=True, 
+        verbose_name='Username Telegram бота',
+        help_text='Username бота для клиентов (без @)'
+    )
     created_at = models.DateTimeField(
         auto_now_add=True, 
         verbose_name='Дата создания'
