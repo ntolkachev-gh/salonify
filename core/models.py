@@ -502,4 +502,31 @@ class Embedding(models.Model):
         unique_together = ['document', 'chunk_index']
 
     def __str__(self):
-        return f"{self.document.name} - часть {self.chunk_index}" 
+        return f"Embedding {self.document.name} - часть {self.chunk_index}"
+
+
+class UserSession(models.Model):
+    """Сессия пользователя для Telegram бота"""
+    user_id = models.BigIntegerField(
+        verbose_name='ID пользователя Telegram',
+        unique=True
+    )
+    session_data = models.JSONField(
+        default=dict,
+        verbose_name='Данные сессии'
+    )
+    created_at = models.DateTimeField(
+        auto_now_add=True,
+        verbose_name='Дата создания'
+    )
+    updated_at = models.DateTimeField(
+        auto_now=True,
+        verbose_name='Дата обновления'
+    )
+
+    class Meta:
+        verbose_name = 'Сессия пользователя'
+        verbose_name_plural = 'Сессии пользователей'
+
+    def __str__(self):
+        return f"Сессия пользователя {self.user_id}" 

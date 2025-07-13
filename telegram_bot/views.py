@@ -10,75 +10,81 @@ from django.shortcuts import get_object_or_404
 from telegram import Update
 from telegram.ext import ContextTypes
 from .bot import get_or_create_bot, start_bot_for_user, stop_bot_for_user
-from core.models import Salon
+from core.models import Salon, UserSession
 
 User = get_user_model()
 logger = logging.getLogger(__name__)
 
-# In-memory session storage (в продакшене лучше использовать Redis)
-user_sessions = {}
+def get_user_session(telegram_user_id):
+    """Get user session data from database"""
+    try:
+        session = UserSession.objects.get(user_id=telegram_user_id)
+        return session.session_data
+    except UserSession.DoesNotExist:
+        return {}
 
-def get_user_session(user_id):
-    """Get user session data"""
-    return user_sessions.get(user_id, {})
+def set_user_session(telegram_user_id, data):
+    """Set user session data in database"""
+    session, created = UserSession.objects.get_or_create(
+        user_id=telegram_user_id,
+        defaults={'session_data': data}
+    )
+    if not created:
+        session.session_data = data
+        session.save()
 
-def set_user_session(user_id, data):
-    """Set user session data"""
-    user_sessions[user_id] = data
+def clear_user_session(telegram_user_id):
+    """Clear user session data from database"""
+    UserSession.objects.filter(user_id=telegram_user_id).delete()
 
-def clear_user_session(user_id):
-    """Clear user session data"""
-    if user_id in user_sessions:
-        del user_sessions[user_id]
-
-def start_salon_registration(user_id):
+def start_salon_registration(telegram_user_id):
     """Start salon registration process"""
-    set_user_session(user_id, {
+    set_user_session(telegram_user_id, {
         'state': 'salon_registration',
         'step': 'name',
         'salon_data': {}
     })
 
-def handle_salon_registration_step(bot, user, chat_id, text, session_data):
+def handle_salon_registration_step(bot, user, chat_id, text, session_data, telegram_user_id):
     """Handle salon registration steps"""
     step = session_data.get('step')
     salon_data = session_data.get('salon_data', {})
     
-    logger.info(f"Registration step for user {user.id}: step={step}, text='{text}'")
+    logger.info(f"Registration step for telegram_user {telegram_user_id}: step={step}, text='{text}'")
     
     if step == 'name':
         salon_data['name'] = text
         session_data['step'] = 'address'
         session_data['salon_data'] = salon_data
-        set_user_session(user.id, session_data)
+        set_user_session(telegram_user_id, session_data)
         send_message(bot, chat_id, "📍 Введите адрес салона:")
         
     elif step == 'address':
         salon_data['address'] = text
         session_data['step'] = 'phone'
         session_data['salon_data'] = salon_data
-        set_user_session(user.id, session_data)
+        set_user_session(telegram_user_id, session_data)
         send_message(bot, chat_id, "📞 Введите телефон салона:")
         
     elif step == 'phone':
         salon_data['phone'] = text
         session_data['step'] = 'email'
         session_data['salon_data'] = salon_data
-        set_user_session(user.id, session_data)
+        set_user_session(telegram_user_id, session_data)
         send_message(bot, chat_id, "📧 Введите email салона:")
         
     elif step == 'email':
         salon_data['email'] = text
         session_data['step'] = 'working_hours'
         session_data['salon_data'] = salon_data
-        set_user_session(user.id, session_data)
+        set_user_session(telegram_user_id, session_data)
         send_message(bot, chat_id, "🕐 Введите часы работы (например: Пн-Пт 9:00-18:00, Сб 10:00-16:00):")
         
     elif step == 'working_hours':
         salon_data['working_hours'] = text
         session_data['step'] = 'telegram_bot_token'
         session_data['salon_data'] = salon_data
-        set_user_session(user.id, session_data)
+        set_user_session(telegram_user_id, session_data)
         send_message(bot, chat_id, """
 🤖 Введите токен Telegram бота для клиентов салона:
 
@@ -107,7 +113,7 @@ def handle_salon_registration_step(bot, user, chat_id, text, session_data):
         salon_data['telegram_bot_token'] = text
         session_data['step'] = 'telegram_bot_username'
         session_data['salon_data'] = salon_data
-        set_user_session(user.id, session_data)
+        set_user_session(telegram_user_id, session_data)
         send_message(bot, chat_id, """
 🤖 Введите username Telegram бота (без @):
 
@@ -121,7 +127,7 @@ def handle_salon_registration_step(bot, user, chat_id, text, session_data):
         salon_data['telegram_bot_username'] = username
         session_data['step'] = 'openai_api_key'
         session_data['salon_data'] = salon_data
-        set_user_session(user.id, session_data)
+        set_user_session(telegram_user_id, session_data)
         send_message(bot, chat_id, """
 🔑 Введите API ключ OpenAI:
 
@@ -151,7 +157,7 @@ sk-proj-abc123def456ghi789jkl...
         salon_data['openai_api_key'] = text
         session_data['step'] = 'confirmation'
         session_data['salon_data'] = salon_data
-        set_user_session(user.id, session_data)
+        set_user_session(telegram_user_id, session_data)
         
         # Show summary and ask for confirmation
         summary_message = f"""
@@ -246,16 +252,16 @@ ID салона: {salon.id}
                 send_message(bot, chat_id, success_message.strip())
                 
                 # Clear session
-                clear_user_session(user.id)
+                clear_user_session(telegram_user_id)
                 
             except Exception as e:
                 logger.error(f"Error creating salon: {str(e)}")
                 send_message(bot, chat_id, f"❌ Ошибка при создании салона: {str(e)}")
-                clear_user_session(user.id)
+                clear_user_session(telegram_user_id)
         
         elif text.lower() in ['нет', 'no', 'n', 'н']:
             send_message(bot, chat_id, "❌ Регистрация отменена. Используйте /register_salon для повторной попытки.")
-            clear_user_session(user.id)
+            clear_user_session(telegram_user_id)
         
         else:
             send_message(bot, chat_id, "Пожалуйста, ответьте 'да' или 'нет':")
@@ -314,12 +320,13 @@ def handle_message_sync(bot, update, user):
         text = message.text
         chat_id = message.chat.id
         
-        # Get or create user session data
-        session_data = get_user_session(user.id)
+        # Get or create user session data using Telegram user ID
+        telegram_user_id = message.from_user.id
+        session_data = get_user_session(telegram_user_id)
         
         # Handle commands
         if text == '/start':
-            clear_user_session(user.id)
+            clear_user_session(telegram_user_id)
             send_message(bot, chat_id, f"""
 👋 Добро пожаловать в Salonify Admin Bot, {message.from_user.first_name}!
 
@@ -350,7 +357,7 @@ def handle_message_sync(bot, update, user):
             """.strip())
             
         elif text == '/register_salon':
-            start_salon_registration(user.id)
+            start_salon_registration(telegram_user_id)
             send_message(bot, chat_id, """
 🏪 Регистрация салона
 
@@ -358,10 +365,10 @@ def handle_message_sync(bot, update, user):
             """.strip())
             
         elif session_data.get('state') == 'salon_registration':
-            handle_salon_registration_step(bot, user, chat_id, text, session_data)
+            handle_salon_registration_step(bot, user, chat_id, text, session_data, telegram_user_id)
             
         elif text == '/create_bot':
-            clear_user_session(user.id)  # Clear any existing session
+            clear_user_session(telegram_user_id)  # Clear any existing session
             send_message(bot, chat_id, """
 🤖 Создание бота для клиентов
 
@@ -376,7 +383,7 @@ def handle_message_sync(bot, update, user):
             """.strip())
             
         elif text == '/my_salons':
-            clear_user_session(user.id)  # Clear any existing session
+            clear_user_session(telegram_user_id)  # Clear any existing session
             send_message(bot, chat_id, """
 🏪 Мои салоны
 
@@ -389,7 +396,7 @@ def handle_message_sync(bot, update, user):
             """.strip())
             
         elif text == '/salon_stats':
-            clear_user_session(user.id)  # Clear any existing session
+            clear_user_session(telegram_user_id)  # Clear any existing session
             send_message(bot, chat_id, """
 📊 Статистика салона
 
