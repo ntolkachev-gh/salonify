@@ -212,11 +212,12 @@ CELERY_TIMEZONE = 'UTC'
 
 # Celery SSL Configuration for Heroku Redis
 if CELERY_BROKER_URL.startswith('rediss://'):
+    import ssl
     CELERY_BROKER_USE_SSL = {
-        'ssl_cert_reqs': 'CERT_NONE'
+        'ssl_cert_reqs': ssl.CERT_NONE
     }
     CELERY_REDIS_BACKEND_USE_SSL = {
-        'ssl_cert_reqs': 'CERT_NONE'
+        'ssl_cert_reqs': ssl.CERT_NONE
     }
 
 # Celery Beat settings
