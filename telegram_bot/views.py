@@ -183,9 +183,27 @@ sk-proj-abc123def456ghi789jkl...
                 import secrets
                 import string
                 
-                # Generate username based on salon name
-                salon_name_clean = ''.join(c for c in salon_data['name'].lower() if c.isalnum())
-                base_username = salon_name_clean[:20] if salon_name_clean else 'salon'
+                # Generate username based on salon name (transliterate to Latin)
+                def transliterate_to_latin(text):
+                    """Convert Cyrillic to Latin characters"""
+                    cyrillic_to_latin = {
+                        'а': 'a', 'б': 'b', 'в': 'v', 'г': 'g', 'д': 'd', 'е': 'e', 'ё': 'yo',
+                        'ж': 'zh', 'з': 'z', 'и': 'i', 'й': 'y', 'к': 'k', 'л': 'l', 'м': 'm',
+                        'н': 'n', 'о': 'o', 'п': 'p', 'р': 'r', 'с': 's', 'т': 't', 'у': 'u',
+                        'ф': 'f', 'х': 'h', 'ц': 'ts', 'ч': 'ch', 'ш': 'sh', 'щ': 'sch',
+                        'ъ': '', 'ы': 'y', 'ь': '', 'э': 'e', 'ю': 'yu', 'я': 'ya'
+                    }
+                    result = ''
+                    for char in text.lower():
+                        if char in cyrillic_to_latin:
+                            result += cyrillic_to_latin[char]
+                        elif char.isalnum():
+                            result += char
+                    return result
+                
+                salon_name_transliterated = transliterate_to_latin(salon_data['name'])
+                salon_name_clean = ''.join(c for c in salon_name_transliterated if c.isalnum())
+                base_username = f"salon_{salon_name_clean[:15]}" if salon_name_clean else 'salon_business'
                 
                 # Ensure unique username
                 username = base_username
@@ -194,9 +212,9 @@ sk-proj-abc123def456ghi789jkl...
                     username = f"{base_username}_{counter}"
                     counter += 1
                 
-                # Generate password
-                alphabet = string.ascii_letters + string.digits
-                password = ''.join(secrets.choice(alphabet) for _ in range(12))
+                # Generate secure password
+                alphabet = string.ascii_letters + string.digits + '!@#$%&*'
+                password = ''.join(secrets.choice(alphabet) for _ in range(16))
                 
                 # Create new user for the salon
                 salon_user = User.objects.create_user(
