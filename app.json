@@ -1,0 +1,65 @@
+{
+  "name": "Salonify",
+  "description": "Multi-tenant salon management platform with Telegram bot integration",
+  "repository": "https://github.com/yourusername/salonify",
+  "keywords": ["django", "salon", "telegram", "bot", "appointments"],
+  "env": {
+    "SECRET_KEY": {
+      "description": "Django secret key",
+      "generator": "secret"
+    },
+    "DEBUG": {
+      "description": "Enable debug mode",
+      "value": "False"
+    },
+    "ALLOWED_HOSTS": {
+      "description": "Comma-separated list of allowed hosts",
+      "value": "yourdomain.herokuapp.com"
+    },
+    "TELEGRAM_BOT_TOKEN": {
+      "description": "Default Telegram bot token (optional)",
+      "required": false
+    },
+    "OPENAI_API_KEY": {
+      "description": "OpenAI API key for embeddings",
+      "required": false
+    },
+    "DJANGO_LOG_LEVEL": {
+      "description": "Django logging level",
+      "value": "INFO"
+    }
+  },
+  "addons": [
+    {
+      "plan": "heroku-postgresql:hobby-dev",
+      "options": {
+        "version": "15"
+      }
+    },
+    {
+      "plan": "heroku-redis:hobby-dev"
+    }
+  ],
+  "buildpacks": [
+    {
+      "url": "heroku/python"
+    }
+  ],
+  "formation": {
+    "web": {
+      "quantity": 1,
+      "size": "hobby"
+    },
+    "worker": {
+      "quantity": 1,
+      "size": "hobby"
+    },
+    "beat": {
+      "quantity": 1,
+      "size": "hobby"
+    }
+  },
+  "scripts": {
+    "postdeploy": "python manage.py migrate && python manage.py collectstatic --noinput"
+  }
+} 

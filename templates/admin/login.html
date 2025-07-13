@@ -1,0 +1,290 @@
+{% extends "admin/base.html" %}
+{% load i18n static %}
+
+{% block extrahead %}
+{{ block.super }}
+<style>
+/* Кастомные стили для страницы входа */
+html, body {
+    height: 100%;
+    margin: 0;
+    padding: 0;
+    overflow: hidden;
+}
+
+body.login {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    height: 100vh;
+    margin: 0;
+    padding: 0;
+}
+
+.login #container {
+    width: 100%;
+    height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+    box-sizing: border-box;
+    margin: 0;
+}
+
+.login #content {
+    background: rgba(255, 255, 255, 0.95);
+    backdrop-filter: blur(10px);
+    border-radius: 20px;
+    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+    padding: 40px;
+    width: 100%;
+    max-width: 400px;
+    text-align: center;
+}
+
+.login #content-main {
+    width: 100%;
+}
+
+/* Логотип и заголовок */
+.login-header {
+    margin-bottom: 30px;
+}
+
+.login-logo {
+    font-size: 32px;
+    font-weight: 700;
+    color: #667eea;
+    margin-bottom: 10px;
+    display: block;
+}
+
+.login-subtitle {
+    color: #6c757d;
+    font-size: 16px;
+    margin-bottom: 0;
+}
+
+/* Форма входа */
+.login form {
+    margin: 0;
+}
+
+.form-row {
+    margin-bottom: 20px;
+    text-align: left;
+}
+
+.form-row label {
+    display: block;
+    margin-bottom: 8px;
+    color: #495057;
+    font-weight: 600;
+    font-size: 14px;
+}
+
+.form-row input[type="text"],
+.form-row input[type="password"] {
+    width: 100%;
+    padding: 12px 16px;
+    border: 2px solid #e9ecef;
+    border-radius: 10px;
+    font-size: 16px;
+    transition: all 0.3s ease;
+    background: #fff;
+    box-sizing: border-box;
+}
+
+.form-row input[type="text"]:focus,
+.form-row input[type="password"]:focus {
+    outline: none;
+    border-color: #667eea;
+    box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+}
+
+/* Кнопка входа */
+.submit-row {
+    margin-top: 30px;
+}
+
+.submit-row input[type="submit"] {
+    width: 100%;
+    padding: 14px;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    border: none;
+    border-radius: 10px;
+    font-size: 16px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+}
+
+.submit-row input[type="submit"]:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 10px 20px rgba(102, 126, 234, 0.3);
+}
+
+.submit-row input[type="submit"]:active {
+    transform: translateY(0);
+}
+
+/* Сообщения об ошибках */
+.errornote {
+    background: #f8d7da;
+    color: #721c24;
+    border: 1px solid #f5c6cb;
+    border-radius: 10px;
+    padding: 12px 16px;
+    margin-bottom: 20px;
+    font-size: 14px;
+}
+
+/* Дополнительные ссылки */
+.login-footer {
+    margin-top: 30px;
+    padding-top: 20px;
+    border-top: 1px solid #e9ecef;
+    color: #6c757d;
+    font-size: 14px;
+}
+
+.login-footer a {
+    color: #667eea;
+    text-decoration: none;
+}
+
+.login-footer a:hover {
+    text-decoration: underline;
+}
+
+/* Адаптивность */
+@media (max-width: 480px) {
+    .login #content {
+        padding: 30px 20px;
+        margin: 10px;
+        border-radius: 15px;
+    }
+    
+    .login-logo {
+        font-size: 28px;
+    }
+    
+    .form-row input[type="text"],
+    .form-row input[type="password"] {
+        padding: 10px 14px;
+        font-size: 14px;
+    }
+    
+    .submit-row input[type="submit"] {
+        padding: 12px;
+        font-size: 14px;
+    }
+}
+
+/* Анимация появления */
+.login #content {
+    animation: fadeInUp 0.6s ease-out;
+}
+
+@keyframes fadeInUp {
+    from {
+        opacity: 0;
+        transform: translateY(30px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* Скрываем стандартные элементы */
+.login #header {
+    display: none;
+}
+
+.login #nav-sidebar {
+    display: none;
+}
+
+.login .breadcrumbs {
+    display: none;
+}
+</style>
+{% endblock %}
+
+{% block title %}Вход в систему{% endblock %}
+
+{% block bodyclass %}{{ block.super }} login{% endblock %}
+
+{% block usertools %}{% endblock %}
+
+{% block nav-global %}{% endblock %}
+
+{% block nav-sidebar %}{% endblock %}
+
+{% block breadcrumbs %}{% endblock %}
+
+{% block content %}
+<div class="login-header">
+    <div class="login-logo">🏛️ Salonify</div>
+    <p class="login-subtitle">Система управления салоном красоты</p>
+</div>
+
+{% if form.errors and not form.non_field_errors %}
+    <p class="errornote">
+        {% if form.errors.items|length == 1 %}
+            Пожалуйста, исправьте ошибку ниже.
+        {% else %}
+            Пожалуйста, исправьте ошибки ниже.
+        {% endif %}
+    </p>
+{% endif %}
+
+{% if form.non_field_errors %}
+    {% for error in form.non_field_errors %}
+        <p class="errornote">{{ error }}</p>
+    {% endfor %}
+{% endif %}
+
+<form action="{{ app_path }}" method="post" id="login-form">
+    {% csrf_token %}
+    
+    <div class="form-row">
+        {{ form.username.label_tag }}
+        {{ form.username }}
+        {% if form.username.errors %}
+            {% for error in form.username.errors %}
+                <p class="errornote">{{ error }}</p>
+            {% endfor %}
+        {% endif %}
+    </div>
+    
+    <div class="form-row">
+        {{ form.password.label_tag }}
+        {{ form.password }}
+        {% if form.password.errors %}
+            {% for error in form.password.errors %}
+                <p class="errornote">{{ error }}</p>
+            {% endfor %}
+        {% endif %}
+    </div>
+    
+    {% url 'admin_password_reset' as password_reset_url %}
+    {% if password_reset_url %}
+        <div class="password-reset-link">
+            <a href="{{ password_reset_url }}">Забыли пароль?</a>
+        </div>
+    {% endif %}
+    
+    <div class="submit-row">
+        <input type="submit" value="Войти в систему">
+    </div>
+</form>
+
+<div class="login-footer">
+    <p>© 2025 Salonify. Все права защищены.</p>
+</div>
+{% endblock %} 

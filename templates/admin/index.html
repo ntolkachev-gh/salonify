@@ -1,0 +1,96 @@
+{% extends "admin/base_site.html" %}
+{% load i18n static %}
+
+{% block extrahead %}
+{{ block.super }}
+<script src="{% static 'admin/js/vendor/jquery/jquery.js' %}"></script>
+{% endblock %}
+
+{% block coltype %}colM{% endblock %}
+
+{% block bodyclass %}{{ block.super }} dashboard{% endblock %}
+
+{% block breadcrumbs %}{% endblock %}
+
+{% block nav-sidebar %}{% endblock %}
+
+{% block content %}
+<div id="content-main">
+    {% if app_list %}
+        {% for app in app_list %}
+            <div class="module">
+                <h2>
+                    <a href="{{ app.app_url }}" class="section" title="{% blocktrans with name=app.name %}Models in the {{ name }} application{% endblocktrans %}">
+                        {{ app.name }}
+                    </a>
+                </h2>
+                <table>
+                    {% for model in app.models %}
+                        <tr class="model-{{ model.object_name|lower }}">
+                            <td>
+                                <strong>{{ model.name }}</strong>
+                                {% if model.admin_url %}
+                                    <a href="{{ model.admin_url }}" class="changelink">{% trans 'Change' %}</a>
+                                {% endif %}
+                                {% if model.add_url %}
+                                    <a href="{{ model.add_url }}" class="addlink">{% trans 'Add' %}</a>
+                                {% endif %}
+                            </td>
+                        </tr>
+                    {% endfor %}
+                </table>
+            </div>
+        {% endfor %}
+    {% else %}
+        <div class="module">
+            <h2>{% trans 'Recent actions' %}</h2>
+            <p>{% trans 'None available' %}</p>
+        </div>
+    {% endif %}
+
+    <!-- Блок последних действий -->
+    {% load log %}
+    {% get_admin_log 10 as admin_log for_user user %}
+    {% if admin_log %}
+        <div class="module">
+            <h2>{% trans 'Recent actions' %}</h2>
+            <div id="recent-actions-module">
+                <h3>{% trans 'My actions' %}</h3>
+                {% for entry in admin_log %}
+                    <div class="module">
+                        <p class="datetime">{% blocktrans with timesince=entry.action_time|timesince %}{{ timesince }} ago{% endblocktrans %}</p>
+                        <p>
+                            {% if entry.is_change %}
+                                <img src="{% static 'admin/img/icon-changelink.svg' %}" alt="{% trans 'Change' %}">
+                            {% elif entry.is_addition %}
+                                <img src="{% static 'admin/img/icon-addlink.svg' %}" alt="{% trans 'Add' %}">
+                            {% elif entry.is_deletion %}
+                                <img src="{% static 'admin/img/icon-deletelink.svg' %}" alt="{% trans 'Delete' %}">
+                            {% endif %}
+                            {% if entry.content_type %}
+                                <span class="mini quiet">
+                                    {{ entry.content_type.name|capfirst }}
+                                </span>
+                            {% else %}
+                                <span class="mini quiet">{% trans 'Unknown content' %}</span>
+                            {% endif %}
+                        </p>
+                        {% if entry.object_repr %}
+                            <p>
+                                {% if entry.content_type and entry.get_admin_url %}
+                                    <a href="{{ entry.get_admin_url }}">{{ entry.object_repr }}</a>
+                                {% else %}
+                                    {{ entry.object_repr }}
+                                {% endif %}
+                            </p>
+                        {% endif %}
+                        {% if entry.change_message %}
+                            <p class="mini quiet">{{ entry.change_message }}</p>
+                        {% endif %}
+                    </div>
+                {% endfor %}
+            </div>
+        </div>
+    {% endif %}
+</div>
+{% endblock %} 

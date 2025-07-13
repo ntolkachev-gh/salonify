@@ -1,0 +1,428 @@
+# Russian translations for Salonify
+# Copyright (C) 2024 Salonify
+# This file is distributed under the same license as the Salonify package.
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: Salonify 1.0\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2024-01-01 12:00+0000\n"
+"PO-Revision-Date: 2024-01-01 12:00+0000\n"
+"Last-Translator: Salonify Team\n"
+"Language-Team: Russian\n"
+"Language: ru\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=4; plural=(n%10==1 && n%100!=11 ? 0 : n%10>=2 && n%10<=4 && (n%100<12 || n%100>14) ? 1 : n%10==0 || (n%10>=5 && n%10<=9) || (n%100>=11 && n%100<=14)? 2 : 3);\n"
+
+# Admin interface
+msgid "Administration"
+msgstr "Администрирование"
+
+msgid "Welcome"
+msgstr "Добро пожаловать"
+
+msgid "Recent actions"
+msgstr "Последние действия"
+
+msgid "My actions"
+msgstr "Мои действия"
+
+msgid "None available"
+msgstr "Нет доступных"
+
+msgid "Unknown content"
+msgstr "Неизвестный контент"
+
+msgid "Yes"
+msgstr "Да"
+
+msgid "No"
+msgstr "Нет"
+
+msgid "Unknown"
+msgstr "Неизвестно"
+
+msgid "All"
+msgstr "Все"
+
+msgid "Any date"
+msgstr "Любая дата"
+
+msgid "Today"
+msgstr "Сегодня"
+
+msgid "Past 7 days"
+msgstr "За последние 7 дней"
+
+msgid "This month"
+msgstr "В этом месяце"
+
+msgid "This year"
+msgstr "В этом году"
+
+msgid "Save"
+msgstr "Сохранить"
+
+msgid "Save and continue editing"
+msgstr "Сохранить и продолжить редактирование"
+
+msgid "Save and add another"
+msgstr "Сохранить и добавить ещё"
+
+msgid "Save as new"
+msgstr "Сохранить как новый"
+
+msgid "Delete"
+msgstr "Удалить"
+
+msgid "Add"
+msgstr "Добавить"
+
+msgid "Change"
+msgstr "Изменить"
+
+msgid "View"
+msgstr "Просмотр"
+
+msgid "Search"
+msgstr "Поиск"
+
+msgid "Go"
+msgstr "Перейти"
+
+msgid "Clear"
+msgstr "Очистить"
+
+msgid "Filter"
+msgstr "Фильтр"
+
+msgid "Show all"
+msgstr "Показать все"
+
+msgid "Hide"
+msgstr "Скрыть"
+
+msgid "Show"
+msgstr "Показать"
+
+msgid "Actions"
+msgstr "Действия"
+
+msgid "Action"
+msgstr "Действие"
+
+msgid "entry"
+msgstr "запись"
+
+msgid "entries"
+msgstr "записи"
+
+msgid "Home"
+msgstr "Главная"
+
+msgid "Server Error (500)"
+msgstr "Ошибка сервера (500)"
+
+msgid "Server error"
+msgstr "Ошибка сервера"
+
+msgid "Server error (500)"
+msgstr "Ошибка сервера (500)"
+
+msgid "Thanks for spending some quality time with the Web site today."
+msgstr "Спасибо за время, проведённое на сайте сегодня."
+
+msgid "Log out"
+msgstr "Выйти"
+
+msgid "Username:"
+msgstr "Имя пользователя:"
+
+msgid "Password:"
+msgstr "Пароль:"
+
+msgid "Log in"
+msgstr "Войти"
+
+msgid "Forgotten your password or username?"
+msgstr "Забыли пароль или имя пользователя?"
+
+# Model names
+msgid "user"
+msgstr "пользователь"
+
+msgid "users"
+msgstr "пользователи"
+
+msgid "salon"
+msgstr "салон"
+
+msgid "salons"
+msgstr "салоны"
+
+msgid "master"
+msgstr "мастер"
+
+msgid "masters"
+msgstr "мастера"
+
+msgid "service"
+msgstr "услуга"
+
+msgid "services"
+msgstr "услуги"
+
+msgid "client"
+msgstr "клиент"
+
+msgid "clients"
+msgstr "клиенты"
+
+msgid "appointment"
+msgstr "запись"
+
+msgid "appointments"
+msgstr "записи"
+
+msgid "document"
+msgstr "документ"
+
+msgid "documents"
+msgstr "документы"
+
+msgid "post"
+msgstr "пост"
+
+msgid "posts"
+msgstr "посты"
+
+msgid "embedding"
+msgstr "векторное представление"
+
+msgid "embeddings"
+msgstr "векторные представления"
+
+# Common field names
+msgid "Name"
+msgstr "Название"
+
+msgid "Description"
+msgstr "Описание"
+
+msgid "Price"
+msgstr "Цена"
+
+msgid "Phone"
+msgstr "Телефон"
+
+msgid "Email"
+msgstr "Email"
+
+msgid "Address"
+msgstr "Адрес"
+
+msgid "Created"
+msgstr "Создано"
+
+msgid "Updated"
+msgstr "Обновлено"
+
+msgid "Active"
+msgstr "Активно"
+
+msgid "Status"
+msgstr "Статус"
+
+msgid "Category"
+msgstr "Категория"
+
+msgid "Duration"
+msgstr "Длительность"
+
+msgid "Date"
+msgstr "Дата"
+
+msgid "Time"
+msgstr "Время"
+
+# Status choices
+msgid "Planned"
+msgstr "Запланирована"
+
+msgid "Cancelled"
+msgstr "Отменена"
+
+msgid "Completed"
+msgstr "Выполнена"
+
+msgid "Scheduled"
+msgstr "Запланирован"
+
+msgid "Sent"
+msgstr "Отправлен"
+
+msgid "Error"
+msgstr "Ошибка"
+
+# Categories
+msgid "Haircut"
+msgstr "Стрижка"
+
+msgid "Coloring"
+msgstr "Окрашивание"
+
+msgid "Styling"
+msgstr "Укладка"
+
+msgid "Manicure"
+msgstr "Маникюр"
+
+msgid "Pedicure"
+msgstr "Педикюр"
+
+msgid "Facial"
+msgstr "Уход за лицом"
+
+msgid "Massage"
+msgstr "Массаж"
+
+msgid "Other"
+msgstr "Другое"
+
+# Application names
+msgid "Authentication and Authorization"
+msgstr "Аутентификация и авторизация"
+
+msgid "Core"
+msgstr "Основное"
+
+msgid "Periodic Tasks"
+msgstr "Периодические задачи"
+
+msgid "Celery Results"
+msgstr "Результаты Celery"
+
+# Success messages
+msgid "was added successfully"
+msgstr "успешно добавлен"
+
+msgid "was changed successfully"
+msgstr "успешно изменён"
+
+msgid "was deleted successfully"
+msgstr "успешно удалён"
+
+msgid "Successfully deleted"
+msgstr "Успешно удалено"
+
+# Error messages
+msgid "Please correct the error below."
+msgstr "Пожалуйста, исправьте ошибку ниже."
+
+msgid "Please correct the errors below."
+msgstr "Пожалуйста, исправьте ошибки ниже."
+
+msgid "This field is required."
+msgstr "Это поле обязательно."
+
+msgid "Enter a valid email address."
+msgstr "Введите действительный адрес электронной почты."
+
+msgid "Enter a valid URL."
+msgstr "Введите действительный URL."
+
+msgid "Enter a number."
+msgstr "Введите число."
+
+msgid "Enter a valid date."
+msgstr "Введите действительную дату."
+
+msgid "Enter a valid time."
+msgstr "Введите действительное время."
+
+msgid "Enter a valid date/time."
+msgstr "Введите действительную дату/время."
+
+# Pagination
+msgid "Previous"
+msgstr "Предыдущая"
+
+msgid "Next"
+msgstr "Следующая"
+
+msgid "Page"
+msgstr "Страница"
+
+msgid "of"
+msgstr "из"
+
+# Filters
+msgid "All dates"
+msgstr "Все даты"
+
+msgid "No date"
+msgstr "Без даты"
+
+msgid "Has date"
+msgstr "Есть дата"
+
+msgid "Empty"
+msgstr "Пусто"
+
+msgid "Not empty"
+msgstr "Не пусто"
+
+# Buttons and links
+msgid "Add another"
+msgstr "Добавить ещё"
+
+msgid "Remove"
+msgstr "Удалить"
+
+msgid "Clear all filters"
+msgstr "Очистить все фильтры"
+
+msgid "View on site"
+msgstr "Посмотреть на сайте"
+
+msgid "History"
+msgstr "История"
+
+msgid "Object history"
+msgstr "История объекта"
+
+msgid "Change history"
+msgstr "История изменений"
+
+msgid "Change password"
+msgstr "Изменить пароль"
+
+# Help texts
+msgid "Required. 150 characters or fewer. Letters, digits and @/./+/-/_ only."
+msgstr "Обязательно. 150 символов или меньше. Только буквы, цифры и @/./+/-/_."
+
+msgid "Raw passwords are not stored, so there is no way to see this user's password, but you can change the password using <a href=\"{}\">this form</a>."
+msgstr "Пароли не хранятся в открытом виде, поэтому нет способа увидеть пароль этого пользователя, но вы можете изменить пароль, используя <a href=\"{}\">эту форму</a>."
+
+msgid "Designates whether the user can log into this admin site."
+msgstr "Определяет, может ли пользователь войти в эту административную панель."
+
+msgid "Designates whether this user should be treated as active. Unselect this instead of deleting accounts."
+msgstr "Определяет, должен ли этот пользователь считаться активным. Снимите этот флажок вместо удаления учётной записи."
+
+msgid "The groups this user belongs to. A user will get all permissions granted to each of their groups."
+msgstr "Группы, к которым принадлежит этот пользователь. Пользователь получит все разрешения, предоставленные каждой из их групп."
+
+msgid "Specific permissions for this user."
+msgstr "Конкретные разрешения для этого пользователя."
+
+msgid "Important dates"
+msgstr "Важные даты"
+
+msgid "Personal info"
+msgstr "Личная информация"
+
+msgid "Permissions"
+msgstr "Разрешения" 

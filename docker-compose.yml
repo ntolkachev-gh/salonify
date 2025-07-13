@@ -1,0 +1,72 @@
+version: '3.8'
+
+services:
+  web:
+    build: .
+    ports:
+      - "8000:8000"
+    environment:
+      - DEBUG=True
+      - DATABASE_URL=postgresql://postgres:postgres@db:5432/salonify
+      - REDIS_URL=redis://redis:6379/0
+      - SECRET_KEY=your-secret-key-for-development
+    depends_on:
+      - db
+      - redis
+    volumes:
+      - .:/app
+      - media_volume:/app/media
+    command: python manage.py runserver 0.0.0.0:8000
+
+  db:
+    image: pgvector/pgvector:pg15
+    environment:
+      - POSTGRES_DB=salonify
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=postgres
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+
+  redis:
+    image: redis:7-alpine
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+
+  celery:
+    build: .
+    command: celery -A salonify worker --loglevel=info
+    environment:
+      - DEBUG=True
+      - DATABASE_URL=postgresql://postgres:postgres@db:5432/salonify
+      - REDIS_URL=redis://redis:6379/0
+      - SECRET_KEY=your-secret-key-for-development
+    depends_on:
+      - db
+      - redis
+    volumes:
+      - .:/app
+      - media_volume:/app/media
+
+  celery-beat:
+    build: .
+    command: celery -A salonify beat --loglevel=info
+    environment:
+      - DEBUG=True
+      - DATABASE_URL=postgresql://postgres:postgres@db:5432/salonify
+      - REDIS_URL=redis://redis:6379/0
+      - SECRET_KEY=your-secret-key-for-development
+    depends_on:
+      - db
+      - redis
+    volumes:
+      - .:/app
+      - media_volume:/app/media
+
+volumes:
+  postgres_data:
+  redis_data:
+  media_volume: 

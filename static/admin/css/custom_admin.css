@@ -1,0 +1,516 @@
+/* Кастомные стили для главной панели Django admin */
+
+/* Фиксируем высоту на весь экран */
+html, body {
+    height: 100% !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    overflow-x: hidden !important;
+}
+
+/* Основной контейнер на всю высоту */
+body.dashboard {
+    height: 100vh !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    overflow: hidden !important;
+}
+
+#container {
+    height: 100vh !important;
+    max-width: none !important;
+    width: 100% !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    display: flex !important;
+    flex-direction: column !important;
+}
+
+/* Хедер фиксированной высоты */
+#header {
+    flex-shrink: 0 !important;
+    height: 50px !important;
+    min-height: 50px !important;
+    max-height: 50px !important;
+    line-height: 50px !important;
+}
+
+/* Основной контент занимает оставшуюся высоту */
+#content {
+    flex: 1 !important;
+    max-width: none !important;
+    width: 100% !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    overflow-y: auto !important;
+    height: calc(100vh - 50px) !important;
+}
+
+/* Основной контейнер дашборда */
+#content-main {
+    max-width: none !important;
+    width: 100% !important;
+    margin: 0 !important;
+    padding: 20px !important;
+    height: 100% !important;
+    box-sizing: border-box !important;
+}
+
+/* Двухколоночный макет для дашборда */
+.dashboard #content-main {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 20px;
+    align-items: start;
+    width: 100%;
+    height: 100%;
+    overflow-y: auto;
+}
+
+/* Убираем боковую панель на главной странице */
+.dashboard #nav-sidebar {
+    display: none !important;
+}
+
+/* Расширяем основной контент */
+.dashboard .colMS {
+    margin-left: 0 !important;
+}
+
+/* Стили для модулей приложений */
+.dashboard .module {
+    background: #ffffff;
+    border: 1px solid #e1e5e9;
+    border-radius: 8px;
+    padding: 0;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+    margin-bottom: 20px;
+    overflow: hidden;
+    height: fit-content;
+}
+
+/* Заголовки модулей */
+.dashboard .module h2 {
+    background: linear-gradient(135deg, #417690 0%, #2c5282 100%);
+    color: white;
+    margin: 0;
+    padding: 16px 20px;
+    font-size: 15px;
+    font-weight: 600;
+    border-bottom: none;
+    text-shadow: 0 1px 2px rgba(0,0,0,0.1);
+}
+
+.dashboard .module h2 a {
+    color: white;
+    text-decoration: none;
+    display: block;
+}
+
+.dashboard .module h2 a:hover {
+    color: #e8f4f8;
+}
+
+/* Контент модулей */
+.dashboard .module table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 0;
+}
+
+.dashboard .module table tr {
+    border-bottom: 1px solid #f0f2f5;
+    transition: background-color 0.2s ease;
+}
+
+.dashboard .module table tr:last-child {
+    border-bottom: none;
+}
+
+.dashboard .module table tr:hover {
+    background-color: #f8f9fa;
+}
+
+.dashboard .module table td {
+    padding: 14px 20px;
+    vertical-align: middle;
+}
+
+.dashboard .module table td strong {
+    color: #2d3748;
+    font-weight: 600;
+    display: block;
+    margin-bottom: 6px;
+}
+
+/* Ссылки действий */
+.dashboard .module .changelink,
+.dashboard .module .addlink {
+    display: inline-block;
+    margin-right: 12px;
+    padding: 4px 10px;
+    border-radius: 4px;
+    font-size: 12px;
+    font-weight: 500;
+    text-decoration: none;
+    transition: all 0.2s ease;
+}
+
+.dashboard .module .changelink {
+    background: #e3f2fd;
+    color: #1976d2;
+    border: 1px solid #bbdefb;
+}
+
+.dashboard .module .changelink:hover {
+    background: #1976d2;
+    color: white;
+}
+
+.dashboard .module .addlink {
+    background: #e8f5e8;
+    color: #2e7d32;
+    border: 1px solid #c8e6c9;
+}
+
+.dashboard .module .addlink:hover {
+    background: #2e7d32;
+    color: white;
+}
+
+/* Иконки для действий */
+.dashboard .module .changelink::before {
+    content: "✏️";
+    margin-right: 4px;
+}
+
+.dashboard .module .addlink::before {
+    content: "➕";
+    margin-right: 4px;
+}
+
+/* Блок последних действий */
+#recent-actions-module {
+    padding: 20px;
+}
+
+#recent-actions-module h3 {
+    margin-top: 0;
+    margin-bottom: 16px;
+    color: #2d3748;
+    font-size: 14px;
+    font-weight: 600;
+}
+
+#recent-actions-module .module {
+    background: #f8f9fa;
+    border: 1px solid #e9ecef;
+    border-radius: 6px;
+    padding: 12px;
+    margin-bottom: 12px;
+    box-shadow: none;
+}
+
+#recent-actions-module .datetime {
+    color: #6c757d;
+    font-size: 12px;
+    margin-bottom: 4px;
+}
+
+#recent-actions-module .mini {
+    font-size: 12px;
+    color: #6c757d;
+}
+
+/* Адаптивность */
+@media (max-width: 1200px) {
+    .dashboard #content-main {
+        grid-template-columns: 1fr;
+        gap: 20px;
+    }
+}
+
+@media (max-width: 768px) {
+    #content-main {
+        padding: 20px !important;
+    }
+    
+    .dashboard .module table td {
+        padding: 12px 16px;
+    }
+    
+    .dashboard .module h2 {
+        padding: 14px 16px;
+        font-size: 14px;
+    }
+}
+
+/* Стили для темной темы */
+.theme-dark .dashboard .module {
+    background: #2d3748;
+    border-color: #4a5568;
+}
+
+.theme-dark .dashboard .module h2 {
+    background: linear-gradient(135deg, #4a5568 0%, #2d3748 100%);
+}
+
+.theme-dark .dashboard .module table tr:hover {
+    background-color: #374151;
+}
+
+.theme-dark .dashboard .module table td strong {
+    color: #e2e8f0;
+}
+
+.theme-dark .dashboard .module table tr {
+    border-bottom-color: #4a5568;
+}
+
+.theme-dark #recent-actions-module .module {
+    background: #374151;
+    border-color: #4a5568;
+}
+
+/* Улучшения для общего вида */
+.dashboard .module:hover {
+    box-shadow: 0 4px 12px rgba(0,0,0,0.12);
+    transform: translateY(-1px);
+    transition: all 0.3s ease;
+}
+
+/* Стили для пустых состояний */
+.dashboard .module p {
+    padding: 20px;
+    color: #6c757d;
+    font-style: italic;
+    margin: 0;
+}
+
+/* Компактный вид для больших списков */
+.dashboard .module ul {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+}
+
+.dashboard .module ul li {
+    padding: 12px 20px;
+    border-bottom: 1px solid #f0f2f5;
+    transition: background-color 0.2s ease;
+}
+
+.dashboard .module ul li:hover {
+    background-color: #f8f9fa;
+}
+
+.dashboard .module ul li:last-child {
+    border-bottom: none;
+}
+
+/* Полноэкранные стили для главной страницы */
+.dashboard #header {
+    width: 100% !important;
+}
+
+.dashboard #main {
+    width: 100% !important;
+}
+
+/* Убираем отступы от краев экрана */
+body.dashboard {
+    margin: 0 !important;
+    padding: 0 !important;
+}
+
+.dashboard #container {
+    margin: 0 !important;
+    padding: 0 !important;
+}
+
+/* Стили для заголовка */
+.dashboard #header {
+    background: #417690;
+    padding: 15px 30px;
+}
+
+.dashboard #branding h1 {
+    color: white;
+    font-size: 24px;
+    margin: 0;
+}
+
+.dashboard #branding h1 a {
+    color: white;
+    text-decoration: none;
+}
+
+.dashboard #user-tools {
+    color: white;
+}
+
+.dashboard #user-tools a {
+    color: white;
+} 
+
+/* Стили для всех страниц админ-панели */
+body {
+    height: 100vh !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    overflow-x: hidden !important;
+}
+
+/* Контейнер для всех страниц */
+#container {
+    height: 100vh !important;
+    max-width: none !important;
+    width: 100% !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    display: flex !important;
+    flex-direction: column !important;
+}
+
+/* Хедер для всех страниц */
+#header {
+    flex-shrink: 0 !important;
+    height: 50px !important;
+    min-height: 50px !important;
+    max-height: 50px !important;
+    line-height: 50px !important;
+}
+
+/* Основной контент для всех страниц */
+#content {
+    flex: 1 !important;
+    max-width: none !important;
+    width: 100% !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    overflow-y: auto !important;
+    height: calc(100vh - 50px) !important;
+}
+
+/* Боковая панель навигации */
+#nav-sidebar {
+    height: 100% !important;
+    overflow-y: auto !important;
+}
+
+/* Основной контент с боковой панелью */
+.colMS {
+    height: 100% !important;
+    overflow-y: auto !important;
+}
+
+/* Формы и списки */
+.form-row, .results {
+    max-width: none !important;
+}
+
+/* Убираем лишние отступы */
+.breadcrumbs {
+    margin: 0 !important;
+    padding: 10px 20px !important;
+}
+
+/* Футер прилипает к низу */
+#footer {
+    margin-top: auto !important;
+    flex-shrink: 0 !important;
+}
+
+@media (max-width: 1200px) {
+    .dashboard #content-main {
+        grid-template-columns: 1fr;
+        gap: 15px;
+    }
+}
+
+@media (max-width: 768px) {
+    #content-main {
+        padding: 15px !important;
+    }
+    
+    .dashboard .module table td {
+        padding: 8px !important;
+    }
+    
+    .dashboard .module h2 {
+        font-size: 14px !important;
+        padding: 10px 15px !important;
+    }
+} 
+
+/* Стили для пользовательского меню в хедере */
+#header #user-tools {
+    float: right !important;
+    margin-right: 20px !important;
+    line-height: 50px !important;
+    font-size: 13px !important;
+    white-space: nowrap !important;
+}
+
+#header #user-tools a {
+    color: #ffc !important;
+    text-decoration: none !important;
+    margin-left: 10px !important;
+    padding: 5px 10px !important;
+    border-radius: 3px !important;
+    transition: background-color 0.3s !important;
+}
+
+#header #user-tools a:hover {
+    background-color: rgba(255, 255, 255, 0.1) !important;
+    text-decoration: none !important;
+}
+
+/* Брендинг в хедере */
+#header #branding {
+    float: left !important;
+    margin-left: 20px !important;
+    line-height: 50px !important;
+}
+
+#header #branding h1 {
+    font-size: 18px !important;
+    margin: 0 !important;
+    line-height: 50px !important;
+}
+
+#header #branding h1 a {
+    color: #ffc !important;
+    text-decoration: none !important;
+}
+
+/* Общие стили для хедера */
+#header {
+    background: #417690 !important;
+    color: #ffc !important;
+    overflow: hidden !important;
+    padding: 0 !important;
+    display: flex !important;
+    justify-content: space-between !important;
+    align-items: center !important;
+}
+
+/* Убираем стандартные отступы */
+#header * {
+    line-height: 50px !important;
+}
+
+@media (max-width: 768px) {
+    #header #user-tools {
+        font-size: 12px !important;
+        margin-right: 10px !important;
+    }
+    
+    #header #branding {
+        margin-left: 10px !important;
+    }
+    
+    #header #branding h1 {
+        font-size: 16px !important;
+    }
+} 

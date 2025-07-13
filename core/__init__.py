@@ -1,0 +1,1 @@
+# Core app for salonify project 
