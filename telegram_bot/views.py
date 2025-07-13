@@ -223,7 +223,8 @@ sk-proj-abc123def456ghi789jkl...
                     password=password,
                     first_name=salon_data['name'][:30],  # Limit length
                     telegram_bot_token=salon_data['telegram_bot_token'],
-                    openai_api_token=salon_data['openai_api_key']
+                    openai_api_token=salon_data['openai_api_key'],
+                    is_staff=True  # Даем права персонала для входа в админку
                 )
                 
                 # Create salon
