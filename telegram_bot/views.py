@@ -1,11 +1,14 @@
 import json
 import logging
+import asyncio
 from django.http import JsonResponse, HttpResponse
 from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_http_methods
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth import get_user_model
 from django.shortcuts import get_object_or_404
+from telegram import Update
+from telegram.ext import ContextTypes
 from .bot import get_or_create_bot, start_bot_for_user, stop_bot_for_user
 
 User = get_user_model()
@@ -20,15 +23,12 @@ def webhook(request, bot_token):
         # Find user by bot token
         user = get_object_or_404(User, telegram_bot_token=bot_token)
         
-        # Get bot instance
-        bot = get_or_create_bot(user)
-        
         # Parse update
         update_data = json.loads(request.body)
-        
-        # Process update (this would be handled by the bot's update handler)
-        # For now, just log it
         logger.info(f"Received update for user {user.username}: {update_data}")
+        
+        # Process update synchronously
+        process_telegram_update(user, update_data)
         
         return JsonResponse({'status': 'ok'})
         
@@ -38,6 +38,112 @@ def webhook(request, bot_token):
     except Exception as e:
         logger.error(f"Error processing webhook: {str(e)}")
         return JsonResponse({'error': 'Internal error'}, status=500)
+
+
+def process_telegram_update(user, update_data):
+    """Process Telegram update synchronously"""
+    try:
+        from .bot import SalonifyBot
+        
+        # Create bot instance
+        bot = SalonifyBot(user.telegram_bot_token, user)
+        
+        # Create Update object
+        update = Update.de_json(update_data, bot.application.bot)
+        
+        # Handle different types of updates
+        if update.message:
+            handle_message_sync(bot, update, user)
+        elif update.callback_query:
+            handle_callback_query_sync(bot, update, user)
+            
+    except Exception as e:
+        logger.error(f"Error processing update: {str(e)}")
+
+
+def handle_message_sync(bot, update, user):
+    """Handle message synchronously"""
+    try:
+        message = update.message
+        text = message.text
+        chat_id = message.chat.id
+        
+        # Handle commands
+        if text == '/start':
+            send_message(bot, chat_id, f"""
+👋 Добро пожаловать в Salonify, {message.from_user.first_name}!
+
+Я помогу вам:
+🏪 Зарегистрировать салон
+📅 Записаться на услуги
+❓ Ответить на вопросы о салоне
+🔔 Напомнить о записях
+
+Используйте /help для просмотра всех команд.
+            """.strip())
+            
+        elif text == '/help':
+            send_message(bot, chat_id, """
+🤖 Доступные команды:
+
+/start - Начать работу с ботом
+/help - Показать это сообщение
+/register_salon - Зарегистрировать новый салон
+/book_appointment - Записаться на услугу
+/my_appointments - Мои записи
+/cancel_appointment - Отменить запись
+
+Просто отправьте мне сообщение с вопросом о салоне, и я постараюсь помочь!
+            """.strip())
+            
+        elif text == '/register_salon':
+            send_message(bot, chat_id, """
+🏪 Регистрация салона
+
+Введите название салона:
+            """.strip())
+            
+        else:
+            send_message(bot, chat_id, f"""
+❓ Вы написали: {text}
+
+Я пока учусь отвечать на вопросы. Скоро буду умнее! 🤖
+
+Используйте /help для просмотра доступных команд.
+            """.strip())
+            
+    except Exception as e:
+        logger.error(f"Error handling message: {str(e)}")
+
+
+def handle_callback_query_sync(bot, update, user):
+    """Handle callback query synchronously"""
+    try:
+        query = update.callback_query
+        send_message(bot, query.message.chat.id, "Callback queries не реализованы пока")
+    except Exception as e:
+        logger.error(f"Error handling callback query: {str(e)}")
+
+
+def send_message(bot, chat_id, text):
+    """Send message using requests"""
+    import requests
+    
+    url = f"https://api.telegram.org/bot{bot.token}/sendMessage"
+    data = {
+        'chat_id': chat_id,
+        'text': text,
+        'parse_mode': 'HTML'
+    }
+    
+    try:
+        response = requests.post(url, json=data)
+        if response.status_code == 200:
+            logger.info(f"Message sent successfully to chat {chat_id}")
+        else:
+            logger.error(f"Failed to send message: {response.text}")
+    except Exception as e:
+        logger.error(f"Error sending message: {str(e)}")
 
 
 @login_required
