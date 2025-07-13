@@ -44,6 +44,8 @@ def handle_salon_registration_step(bot, user, chat_id, text, session_data):
     step = session_data.get('step')
     salon_data = session_data.get('salon_data', {})
     
+    logger.info(f"Registration step for user {user.id}: step={step}, text='{text}'")
+    
     if step == 'name':
         salon_data['name'] = text
         session_data['step'] = 'address'
@@ -170,10 +172,39 @@ sk-proj-abc123def456ghi789jkl...
         
     elif step == 'confirmation':
         if text.lower() in ['да', 'yes', 'y', 'д']:
-            # Create salon
+            # Create salon and new business user
             try:
+                import secrets
+                import string
+                
+                # Generate username based on salon name
+                salon_name_clean = ''.join(c for c in salon_data['name'].lower() if c.isalnum())
+                base_username = salon_name_clean[:20] if salon_name_clean else 'salon'
+                
+                # Ensure unique username
+                username = base_username
+                counter = 1
+                while User.objects.filter(username=username).exists():
+                    username = f"{base_username}_{counter}"
+                    counter += 1
+                
+                # Generate password
+                alphabet = string.ascii_letters + string.digits
+                password = ''.join(secrets.choice(alphabet) for _ in range(12))
+                
+                # Create new user for the salon
+                salon_user = User.objects.create_user(
+                    username=username,
+                    email=salon_data['email'],
+                    password=password,
+                    first_name=salon_data['name'][:30],  # Limit length
+                    telegram_bot_token=salon_data['telegram_bot_token'],
+                    openai_api_token=salon_data['openai_api_key']
+                )
+                
+                # Create salon
                 salon = Salon.objects.create(
-                    user=user,
+                    user=salon_user,
                     name=salon_data['name'],
                     address=salon_data['address'],
                     phone=salon_data['phone'],
@@ -197,12 +228,17 @@ sk-proj-abc123def456ghi789jkl...
 
 🔐 Данные для входа в веб-админку:
 URL: https://salonify-app-3cd2419b7b71.herokuapp.com/admin/
-Логин: {user.username}
+Логин: {username}
+Пароль: {password}
+
+⚠️ ВАЖНО: Сохраните эти данные в безопасном месте!
+Пароль показывается только один раз.
 
 🎯 Следующие шаги:
-1. Настройте webhook для бота клиентов
-2. Добавьте мастеров и услуги в админке
-3. Начните принимать записи!
+1. Войдите в админку по указанным данным
+2. Настройте webhook для бота клиентов
+3. Добавьте мастеров и услуги
+4. Начните принимать записи!
 
 ID салона: {salon.id}
                 """
@@ -213,6 +249,7 @@ ID салона: {salon.id}
                 clear_user_session(user.id)
                 
             except Exception as e:
+                logger.error(f"Error creating salon: {str(e)}")
                 send_message(bot, chat_id, f"❌ Ошибка при создании салона: {str(e)}")
                 clear_user_session(user.id)
         
@@ -324,6 +361,7 @@ def handle_message_sync(bot, update, user):
             handle_salon_registration_step(bot, user, chat_id, text, session_data)
             
         elif text == '/create_bot':
+            clear_user_session(user.id)  # Clear any existing session
             send_message(bot, chat_id, """
 🤖 Создание бота для клиентов
 
@@ -338,6 +376,7 @@ def handle_message_sync(bot, update, user):
             """.strip())
             
         elif text == '/my_salons':
+            clear_user_session(user.id)  # Clear any existing session
             send_message(bot, chat_id, """
 🏪 Мои салоны
 
@@ -350,6 +389,7 @@ def handle_message_sync(bot, update, user):
             """.strip())
             
         elif text == '/salon_stats':
+            clear_user_session(user.id)  # Clear any existing session
             send_message(bot, chat_id, """
 📊 Статистика салона
 
@@ -362,14 +402,24 @@ def handle_message_sync(bot, update, user):
             """.strip())
             
         else:
-            send_message(bot, chat_id, f"""
+            # Don't clear session for unknown commands - user might be in registration process
+            if not session_data.get('state'):
+                send_message(bot, chat_id, f"""
 ❓ Вы написали: {text}
 
 Этот бот предназначен для владельцев салонов красоты.
 Используйте /help для просмотра доступных команд.
 
 Если вы клиент салона, обратитесь к администратору за ссылкой на бот вашего салона.
-            """.strip())
+                """.strip())
+            else:
+                # User is in some process, let them know
+                send_message(bot, chat_id, f"""
+❓ Неизвестная команда: {text}
+
+Вы находитесь в процессе регистрации салона.
+Пожалуйста, ответьте на текущий вопрос или используйте /start для начала заново.
+                """.strip())
             
     except Exception as e:
         logger.error(f"Error handling message: {str(e)}")
