@@ -100,7 +100,7 @@ DATABASES = {
 
 # Add PGVector support
 DATABASES['default']['OPTIONS'] = {
-    'init_command': "SET sql_mode='STRICT_TRANS_TABLES'",
+    'sslmode': 'require'
 }
 
 
