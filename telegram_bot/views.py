@@ -227,6 +227,20 @@ sk-proj-abc123def456ghi789jkl...
                     is_staff=True  # Даем права персонала для входа в админку
                 )
                 
+                # Даем права на работу с салонами и связанными моделями
+                from django.contrib.auth.models import Permission
+                from django.contrib.contenttypes.models import ContentType
+                from core.models import Master, Service, Client, Appointment, Document, Post
+                
+                # Модели, на которые нужны права
+                models_to_grant = [Salon, Master, Service, Client, Appointment, Document, Post]
+                
+                for model in models_to_grant:
+                    content_type = ContentType.objects.get_for_model(model)
+                    permissions = Permission.objects.filter(content_type=content_type)
+                    for perm in permissions:
+                        salon_user.user_permissions.add(perm)
+                
                 # Create salon
                 salon = Salon.objects.create(
                     user=salon_user,
