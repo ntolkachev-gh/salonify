@@ -255,6 +255,10 @@ sk-proj-abc123def456ghi789jkl...
                     timezone='UTC'
                 )
                 
+                # Automatically setup webhook for client bot
+                webhook_setup_result = setup_client_bot_webhook(salon)
+                webhook_status = "✅ настроен" if webhook_setup_result else "❌ ошибка настройки"
+                
                 success_message = f"""
 ✅ Салон успешно зарегистрирован!
 
@@ -264,6 +268,7 @@ sk-proj-abc123def456ghi789jkl...
 📧 Email: {salon.email}
 🕐 Часы работы: {salon_data['working_hours']}
 🤖 Бот для клиентов: @{salon.telegram_bot_username}
+🔗 Webhook для клиентов: {webhook_status}
 
 🔐 Данные для входа в веб-админку:
 URL: https://salonify-app-3cd2419b7b71.herokuapp.com/admin/
@@ -549,6 +554,37 @@ def handle_client_callback_query_sync(bot, update, salon):
         
     except Exception as e:
         logger.error(f"Error handling client callback query: {str(e)}")
+
+
+def setup_client_bot_webhook(salon):
+    """Setup webhook for salon client bot"""
+    import requests
+    
+    if not salon.telegram_bot_token:
+        logger.error(f"Salon {salon.name} has no bot token")
+        return False
+    
+    webhook_url = f"https://salonify-app-3cd2419b7b71.herokuapp.com/telegram/webhook/{salon.telegram_bot_token}/"
+    
+    url = f"https://api.telegram.org/bot{salon.telegram_bot_token}/setWebhook"
+    data = {
+        'url': webhook_url,
+        'allowed_updates': ['message', 'callback_query']
+    }
+    
+    try:
+        response = requests.post(url, json=data)
+        result = response.json()
+        
+        if result.get('ok'):
+            logger.info(f"Webhook set for salon {salon.name}: {webhook_url}")
+            return True
+        else:
+            logger.error(f"Failed to set webhook for salon {salon.name}: {result.get('description')}")
+            return False
+    except Exception as e:
+        logger.error(f"Error setting webhook for salon {salon.name}: {str(e)}")
+        return False
 
 
 def send_message(bot, chat_id, text):
