@@ -305,28 +305,38 @@ ID салона: {salon.id}
 def webhook(request, bot_token):
     """Handle Telegram webhook updates"""
     try:
-        # Find user by bot token
-        user = get_object_or_404(User, telegram_bot_token=bot_token)
-        
         # Parse update
         update_data = json.loads(request.body)
-        logger.info(f"Received update for user {user.username}: {update_data}")
+        logger.info(f"Received update for bot_token {bot_token}: {update_data}")
         
-        # Process update synchronously
-        process_telegram_update(user, update_data)
+        # Try to find admin user by bot token first
+        try:
+            user = User.objects.get(telegram_bot_token=bot_token)
+            logger.info(f"Found admin user {user.username} for token")
+            process_telegram_update(user, update_data)
+            return JsonResponse({'status': 'ok'})
+        except User.DoesNotExist:
+            pass
         
-        return JsonResponse({'status': 'ok'})
+        # Try to find salon by bot token
+        try:
+            salon = Salon.objects.get(telegram_bot_token=bot_token)
+            logger.info(f"Found salon {salon.name} for token")
+            process_salon_client_update(salon, update_data)
+            return JsonResponse({'status': 'ok'})
+        except Salon.DoesNotExist:
+            pass
         
-    except User.DoesNotExist:
-        logger.error(f"Bot token {bot_token} not found")
+        logger.error(f"Bot token {bot_token} not found in users or salons")
         return JsonResponse({'error': 'Bot not found'}, status=404)
+        
     except Exception as e:
         logger.error(f"Error processing webhook: {str(e)}")
         return JsonResponse({'error': 'Internal error'}, status=500)
 
 
 def process_telegram_update(user, update_data):
-    """Process Telegram update synchronously"""
+    """Process Telegram update synchronously for admin bots"""
     try:
         from .bot import SalonifyBot
         
@@ -344,6 +354,27 @@ def process_telegram_update(user, update_data):
             
     except Exception as e:
         logger.error(f"Error processing update: {str(e)}")
+
+
+def process_salon_client_update(salon, update_data):
+    """Process Telegram update synchronously for salon client bots"""
+    try:
+        from .client_bot import SalonClientBot
+        
+        # Create client bot instance
+        bot = SalonClientBot(salon)
+        
+        # Create Update object
+        update = Update.de_json(update_data, bot.application.bot)
+        
+        # Handle different types of updates
+        if update.message:
+            handle_client_message_sync(bot, update, salon)
+        elif update.callback_query:
+            handle_client_callback_query_sync(bot, update, salon)
+            
+    except Exception as e:
+        logger.error(f"Error processing salon client update: {str(e)}")
 
 
 def handle_message_sync(bot, update, user):
@@ -472,6 +503,52 @@ def handle_callback_query_sync(bot, update, user):
         send_message(bot, query.message.chat.id, "Callback queries не реализованы пока")
     except Exception as e:
         logger.error(f"Error handling callback query: {str(e)}")
+
+
+def handle_client_message_sync(bot, update, salon):
+    """Handle message synchronously for client bots"""
+    try:
+        import asyncio
+        from telegram.ext import ContextTypes
+        
+        # Create a simple context
+        context = ContextTypes.DEFAULT_TYPE()
+        
+        # Run the async method synchronously
+        loop = asyncio.new_event_loop()
+        asyncio.set_event_loop(loop)
+        
+        async def handle_async():
+            await bot.handle_message(update, context)
+        
+        loop.run_until_complete(handle_async())
+        loop.close()
+        
+    except Exception as e:
+        logger.error(f"Error handling client message: {str(e)}")
+
+
+def handle_client_callback_query_sync(bot, update, salon):
+    """Handle callback query synchronously for client bots"""
+    try:
+        import asyncio
+        from telegram.ext import ContextTypes
+        
+        # Create a simple context
+        context = ContextTypes.DEFAULT_TYPE()
+        
+        # Run the async method synchronously
+        loop = asyncio.new_event_loop()
+        asyncio.set_event_loop(loop)
+        
+        async def handle_async():
+            await bot.button_callback(update, context)
+        
+        loop.run_until_complete(handle_async())
+        loop.close()
+        
+    except Exception as e:
+        logger.error(f"Error handling client callback query: {str(e)}")
 
 
 def send_message(bot, chat_id, text):
