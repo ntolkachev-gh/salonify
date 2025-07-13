@@ -68,11 +68,16 @@ class SalonifyBot:
         welcome_message = f"""
 👋 Добро пожаловать в Salonify, {user.first_name}!
 
+🏪 Я - административный бот для владельцев салонов красоты.
+
 Я помогу вам:
 🏪 Зарегистрировать салон
-📅 Записаться на услуги
-❓ Ответить на вопросы о салоне
-🔔 Напомнить о записях
+🤖 Создать персональный бот для клиентов
+📊 Управлять салоном
+❓ Ответить на ваши вопросы
+
+📝 Для записи клиентов каждый салон получает отдельный бот.
+Этот бот предназначен только для владельцев салонов.
 
 Используйте /help для просмотра всех команд.
         """
@@ -82,16 +87,19 @@ class SalonifyBot:
     async def help_command(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
         """Handle /help command"""
         help_text = """
-🤖 Доступные команды:
+🤖 Команды для владельцев салонов:
 
 /start - Начать работу с ботом
 /help - Показать это сообщение
 /register_salon - Зарегистрировать новый салон
-/book_appointment - Записаться на услугу
-/my_appointments - Мои записи
-/cancel_appointment - Отменить запись
+/create_bot - Создать бота для клиентов (в разработке)
+/my_salons - Мои салоны (в разработке)
+/salon_stats - Статистика салона (в разработке)
 
-Просто отправьте мне сообщение с вопросом о салоне, и я постараюсь помочь!
+📝 Этот бот предназначен для владельцев салонов красоты.
+Для записи на услуги клиенты должны использовать персональный бот своего салона.
+
+Просто отправьте мне сообщение с вопросом, и я постараюсь помочь!
         """
         
         await update.message.reply_text(help_text.strip())
@@ -371,27 +379,99 @@ class SalonifyBot:
         
         elif 'working_hours' not in salon_data:
             salon_data['working_hours'] = text
-            
-            # Create salon
-            try:
-                salon = Salon.objects.create(
-                    user=self.user,
-                    name=salon_data['name'],
-                    address=salon_data['address'],
-                    phone=salon_data['phone'],
-                    email=salon_data['email'],
-                    working_hours={'text': salon_data['working_hours']},
-                    timezone='UTC'
+            await update.message.reply_text(
+                "🤖 Введите токен Telegram бота для клиентов салона:\n\n"
+                "📝 Как получить токен:\n"
+                "1. Напишите @BotFather в Telegram\n"
+                "2. Отправьте команду /newbot\n"
+                "3. Следуйте инструкциям\n"
+                "4. Скопируйте полученный токен\n\n"
+                "Токен выглядит примерно так: 123456789:ABCdefGHIjklMNOpqrsTUVwxyz"
+            )
+        
+        elif 'telegram_bot_token' not in salon_data:
+            # Validate telegram bot token format
+            if not text or not text.count(':') == 1:
+                await update.message.reply_text(
+                    "❌ Неверный формат токена!\n\n"
+                    "Токен должен содержать символ ':' и выглядеть примерно так:\n"
+                    "123456789:ABCdefGHIjklMNOpqrsTUVwxyz\n\n"
+                    "Попробуйте еще раз:"
                 )
+                return
+            
+            salon_data['telegram_bot_token'] = text
+            await update.message.reply_text(
+                "🤖 Введите username Telegram бота (без @):\n\n"
+                "Например: my_salon_bot\n"
+                "Это имя бота, которое вы указали при создании в @BotFather"
+            )
+        
+        elif 'telegram_bot_username' not in salon_data:
+            # Clean username (remove @ if present)
+            username = text.strip().lstrip('@')
+            salon_data['telegram_bot_username'] = username
+            await update.message.reply_text(
+                "🔑 Введите API ключ OpenAI:\n\n"
+                "📝 Как получить ключ:\n"
+                "1. Зайдите на https://platform.openai.com/api-keys\n"
+                "2. Войдите в аккаунт или зарегистрируйтесь\n"
+                "3. Нажмите 'Create new secret key'\n"
+                "4. Скопируйте ключ\n\n"
+                "Ключ начинается с 'sk-' и выглядит примерно так:\n"
+                "sk-proj-abc123def456ghi789jkl..."
+            )
+        
+        elif 'openai_api_key' not in salon_data:
+            # Validate OpenAI API key format
+            if not text or not text.startswith('sk-'):
+                await update.message.reply_text(
+                    "❌ Неверный формат API ключа!\n\n"
+                    "Ключ OpenAI должен начинаться с 'sk-'\n"
+                    "Например: sk-proj-abc123def456ghi789jkl...\n\n"
+                    "Попробуйте еще раз:"
+                )
+                return
+            
+            salon_data['openai_api_key'] = text
+            
+            # Show summary and ask for confirmation
+            summary_message = f"""
+📋 Проверьте данные салона:
+
+🏪 Название: {salon_data['name']}
+📍 Адрес: {salon_data['address']}
+📞 Телефон: {salon_data['phone']}
+📧 Email: {salon_data['email']}
+🕐 Часы работы: {salon_data['working_hours']}
+🤖 Бот: @{salon_data['telegram_bot_username']}
+🔑 OpenAI ключ: {salon_data['openai_api_key'][:10]}...
+
+✅ Все верно? Отправьте 'да' для подтверждения или 'нет' для отмены.
+            """
+            
+            await update.message.reply_text(summary_message.strip())
+        
+        elif 'confirmed' not in salon_data:
+            if text.lower() in ['да', 'yes', 'y', 'д']:
+                salon_data['confirmed'] = True
                 
-                # Generate credentials for web admin
-                import secrets
-                import string
-                
-                alphabet = string.ascii_letters + string.digits
-                password = ''.join(secrets.choice(alphabet) for _ in range(12))
-                
-                success_message = f"""
+                # Create salon
+                try:
+                    salon = Salon.objects.create(
+                        user=self.user,
+                        name=salon_data['name'],
+                        address=salon_data['address'],
+                        phone=salon_data['phone'],
+                        email=salon_data['email'],
+                        working_hours={'text': salon_data['working_hours']},
+                        telegram_bot_token=salon_data['telegram_bot_token'],
+                        telegram_bot_username=salon_data['telegram_bot_username'],
+                        openai_api_key=salon_data['openai_api_key'],
+                        timezone='UTC'
+                    )
+                    
+                    success_message = f"""
 ✅ Салон успешно зарегистрирован!
 
 🏪 Название: {salon.name}
@@ -399,23 +479,35 @@ class SalonifyBot:
 📞 Телефон: {salon.phone}
 📧 Email: {salon.email}
 🕐 Часы работы: {salon_data['working_hours']}
+🤖 Бот для клиентов: @{salon.telegram_bot_username}
 
 🔐 Данные для входа в веб-админку:
+URL: https://salonify-app-3cd2419b7b71.herokuapp.com/admin/
 Логин: {self.user.username}
-Пароль: {password}
-URL: https://your-domain.com/admin/
 
-Сохраните эти данные в безопасном месте!
-                """
-                
-                await update.message.reply_text(success_message.strip())
-                
-                # Clear state
+🎯 Следующие шаги:
+1. Настройте webhook для бота клиентов
+2. Добавьте мастеров и услуги в админке
+3. Начните принимать записи!
+
+ID салона: {salon.id}
+                    """
+                    
+                    await update.message.reply_text(success_message.strip())
+                    
+                    # Clear state
+                    context.user_data.clear()
+                    
+                except Exception as e:
+                    await update.message.reply_text(f"❌ Ошибка при создании салона: {str(e)}")
+                    context.user_data.clear()
+            
+            elif text.lower() in ['нет', 'no', 'n', 'н']:
+                await update.message.reply_text("❌ Регистрация отменена. Используйте /register_salon для повторной попытки.")
                 context.user_data.clear()
-                
-            except Exception as e:
-                await update.message.reply_text(f"❌ Ошибка при создании салона: {str(e)}")
-                context.user_data.clear()
+            
+            else:
+                await update.message.reply_text("Пожалуйста, ответьте 'да' или 'нет':")
     
     async def handle_appointment_booking(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
         """Handle appointment booking datetime input"""
@@ -577,7 +669,14 @@ async def stop_bot_for_user(user: User):
 
 async def start_all_bots():
     """Start bots for all users with tokens"""
-    users = User.objects.exclude(telegram_bot_token__isnull=True).exclude(telegram_bot_token='')
+    from asgiref.sync import sync_to_async
+    
+    # Получаем пользователей синхронно
+    @sync_to_async
+    def get_users():
+        return list(User.objects.exclude(telegram_bot_token__isnull=True).exclude(telegram_bot_token=''))
+    
+    users = await get_users()
     
     for user in users:
         try:

@@ -85,6 +85,12 @@ class Salon(models.Model):
         verbose_name='Username Telegram бота',
         help_text='Username бота для клиентов (без @)'
     )
+    openai_api_key = models.CharField(
+        max_length=255, 
+        blank=True, 
+        verbose_name='OpenAI API ключ',
+        help_text='API ключ для интеграции с OpenAI'
+    )
     created_at = models.DateTimeField(
         auto_now_add=True, 
         verbose_name='Дата создания'
