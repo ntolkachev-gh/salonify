@@ -168,13 +168,9 @@ class SalonClientBot:
     
     async def book_appointment(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
         """Start booking process"""
-        @sync_to_async
-        def get_services():
-            return list(Service.objects.filter(salon=self.salon, is_active=True))
+        services = Service.objects.filter(salon=self.salon, is_active=True)
         
-        services = await get_services()
-        
-        if not services:
+        if not services.exists():
             await update.message.reply_text("❌ В данный момент нет доступных услуг.")
             return
         
@@ -198,25 +194,18 @@ class SalonClientBot:
         """Show user's appointments"""
         user_id = str(update.effective_user.id)
         
-        @sync_to_async
-        def get_client_and_appointments():
-            try:
-                client = Client.objects.get(salon=self.salon, telegram_id=user_id)
-                appointments = list(Appointment.objects.filter(
-                    client=client,
-                    scheduled_at__gte=timezone.now()
-                ).order_by('scheduled_at'))
-                return client, appointments
-            except Client.DoesNotExist:
-                return None, []
-        
-        client, appointments = await get_client_and_appointments()
-        
-        if not client:
+        try:
+            client = Client.objects.get(salon=self.salon, telegram_id=user_id)
+        except Client.DoesNotExist:
             await update.message.reply_text("❌ Вы не зарегистрированы в системе. Используйте /start")
             return
         
-        if not appointments:
+        appointments = Appointment.objects.filter(
+            client=client,
+            scheduled_at__gte=timezone.now()
+        ).order_by('scheduled_at')
+        
+        if not appointments.exists():
             await update.message.reply_text("📅 У вас нет предстоящих записей.")
             return
         
@@ -250,26 +239,19 @@ class SalonClientBot:
         """Cancel appointment"""
         user_id = str(update.effective_user.id)
         
-        @sync_to_async
-        def get_client_and_appointments():
-            try:
-                client = Client.objects.get(salon=self.salon, telegram_id=user_id)
-                appointments = list(Appointment.objects.filter(
-                    client=client,
-                    scheduled_at__gte=timezone.now(),
-                    status__in=['scheduled', 'confirmed']
-                ).order_by('scheduled_at'))
-                return client, appointments
-            except Client.DoesNotExist:
-                return None, []
-        
-        client, appointments = await get_client_and_appointments()
-        
-        if not client:
+        try:
+            client = Client.objects.get(salon=self.salon, telegram_id=user_id)
+        except Client.DoesNotExist:
             await update.message.reply_text("❌ Вы не зарегистрированы в системе. Используйте /start")
             return
         
-        if not appointments:
+        appointments = Appointment.objects.filter(
+            client=client,
+            scheduled_at__gte=timezone.now(),
+            status__in=['scheduled', 'confirmed']
+        ).order_by('scheduled_at')
+        
+        if not appointments.exists():
             await update.message.reply_text("📅 У вас нет записей для отмены.")
             return
         
@@ -331,35 +313,30 @@ class SalonClientBot:
     
     async def handle_service_booking(self, query, context, service_id):
         """Handle service booking"""
-        @sync_to_async
-        def get_service_and_masters():
-            try:
-                service = Service.objects.get(id=service_id, salon=self.salon)
-                if service.master:
-                    masters = [service.master]
-                else:
-                    masters = list(Master.objects.filter(salon=self.salon, is_active=True))
-                return service, masters
-            except Service.DoesNotExist:
-                return None, []
-        
-        service, masters = await get_service_and_masters()
-        
-        if not service:
+        try:
+            service = Service.objects.get(id=service_id, salon=self.salon)
+        except Service.DoesNotExist:
             await query.edit_message_text("❌ Услуга не найдена.")
             return
+        
+        # Store booking data
+        context.user_data[USER_DATA_STATE] = BOOKING_PROCESS
+        context.user_data[USER_DATA_BOOKING] = {
+            'service_id': service_id,
+            'step': 'select_master'
+        }
+        
+        # Get available masters
+        if service.master:
+            # Service has specific master
+            masters = [service.master]
+        else:
+            # Service can be done by any master
+            masters = Master.objects.filter(salon=self.salon, is_active=True)
         
         if not masters:
             await query.edit_message_text("❌ Нет доступных мастеров для этой услуги.")
             return
-        
-        # Store booking data
-        if context.user_data is not None:
-            context.user_data[USER_DATA_STATE] = BOOKING_PROCESS
-            context.user_data[USER_DATA_BOOKING] = {
-                'service_id': service_id,
-                'step': 'select_master'
-            }
         
         # Create keyboard with masters
         keyboard = []
@@ -381,16 +358,9 @@ class SalonClientBot:
     
     async def handle_master_selection(self, query, context, master_id):
         """Handle master selection"""
-        @sync_to_async
-        def get_master():
-            try:
-                return Master.objects.get(id=master_id, salon=self.salon)
-            except Master.DoesNotExist:
-                return None
-        
-        master = await get_master()
-        
-        if not master:
+        try:
+            master = Master.objects.get(id=master_id, salon=self.salon)
+        except Master.DoesNotExist:
             await query.edit_message_text("❌ Мастер не найден.")
             return
         
@@ -409,21 +379,15 @@ class SalonClientBot:
     
     async def handle_appointment_cancellation(self, query, context, appointment_id):
         """Handle appointment cancellation"""
-        @sync_to_async
-        def cancel_appointment():
-            try:
-                appointment = Appointment.objects.get(id=appointment_id)
-                appointment.status = 'cancelled'
-                appointment.save()
-                return appointment
-            except Appointment.DoesNotExist:
-                return None
-        
-        appointment = await cancel_appointment()
-        
-        if not appointment:
+        try:
+            appointment = Appointment.objects.get(id=appointment_id)
+        except Appointment.DoesNotExist:
             await query.edit_message_text("❌ Запись не найдена.")
             return
+        
+        # Cancel appointment
+        appointment.status = 'cancelled'
+        appointment.save()
         
         await query.edit_message_text(
             f"✅ Запись отменена:\n\n"
@@ -435,7 +399,7 @@ class SalonClientBot:
     
     async def handle_message(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
         """Handle text messages"""
-        user_state = context.user_data.get(USER_DATA_STATE) if context.user_data else None
+        user_state = context.user_data.get(USER_DATA_STATE)
         
         if user_state == BOOKING_PROCESS:
             await self.handle_booking_process(update, context)
@@ -445,7 +409,7 @@ class SalonClientBot:
     
     async def handle_booking_process(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
         """Handle booking process steps"""
-        booking_data = context.user_data.get(USER_DATA_BOOKING, {}) if context.user_data else {}
+        booking_data = context.user_data.get(USER_DATA_BOOKING, {})
         step = booking_data.get('step')
         text = update.message.text
         
@@ -464,25 +428,20 @@ class SalonClientBot:
                     return
                 
                 # Create appointment
-                @sync_to_async
-                def create_appointment():
-                    user_id = str(update.effective_user.id)
-                    client = Client.objects.get(salon=self.salon, telegram_id=user_id)
-                    service = Service.objects.get(id=booking_data['service_id'])
-                    master = Master.objects.get(id=booking_data['master_id'])
-                    
-                    appointment = Appointment.objects.create(
-                        salon=self.salon,
-                        client=client,
-                        service=service,
-                        master=master,
-                        scheduled_at=appointment_datetime,
-                        price=service.price,
-                        status='scheduled'
-                    )
-                    return appointment, service, master
+                user_id = str(update.effective_user.id)
+                client = Client.objects.get(salon=self.salon, telegram_id=user_id)
+                service = Service.objects.get(id=booking_data['service_id'])
+                master = Master.objects.get(id=booking_data['master_id'])
                 
-                appointment, service, master = await create_appointment()
+                appointment = Appointment.objects.create(
+                    salon=self.salon,
+                    client=client,
+                    service=service,
+                    master=master,
+                    scheduled_at=appointment_datetime,
+                    price=service.price,
+                    status='scheduled'
+                )
                 
                 success_message = f"""
 ✅ Запись успешно создана!
@@ -556,24 +515,16 @@ class SalonClientBot:
         contact = update.message.contact
         user_id = str(update.effective_user.id)
         
-        @sync_to_async
-        def update_client_phone():
-            try:
-                client = Client.objects.get(salon=self.salon, telegram_id=user_id)
-                client.phone = contact.phone_number
-                client.save()
-                return True
-            except Client.DoesNotExist:
-                return False
-        
-        success = await update_client_phone()
-        
-        if success:
+        try:
+            client = Client.objects.get(salon=self.salon, telegram_id=user_id)
+            client.phone = contact.phone_number
+            client.save()
+            
             await update.message.reply_text(
                 f"✅ Номер телефона обновлен: {contact.phone_number}\n\n"
                 f"Теперь мы сможем связаться с вами по поводу записей."
             )
-        else:
+        except Client.DoesNotExist:
             await update.message.reply_text(
                 "❌ Ошибка обновления номера телефона. Используйте /start для регистрации."
             )

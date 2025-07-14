@@ -514,10 +514,10 @@ def handle_client_message_sync(bot, update, salon):
     """Handle message synchronously for client bots"""
     try:
         import asyncio
-        from telegram.ext import ContextTypes
+        from telegram.ext import ContextTypes, CallbackContext
         
         # Create a simple context
-        context = ContextTypes.DEFAULT_TYPE()
+        context = CallbackContext(bot.application)
         
         # Run the async method synchronously
         loop = asyncio.new_event_loop()
@@ -537,10 +537,10 @@ def handle_client_callback_query_sync(bot, update, salon):
     """Handle callback query synchronously for client bots"""
     try:
         import asyncio
-        from telegram.ext import ContextTypes
+        from telegram.ext import ContextTypes, CallbackContext
         
         # Create a simple context
-        context = ContextTypes.DEFAULT_TYPE()
+        context = CallbackContext(bot.application)
         
         # Run the async method synchronously
         loop = asyncio.new_event_loop()
